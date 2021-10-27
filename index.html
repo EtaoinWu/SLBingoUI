@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLBingoUI</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <link rel="stylesheet" href="mini-default.css">
+  <style>
+    body {
+      background-color: rgba(179, 179, 179, 0.336);
+      margin: 0px auto;
+      overflow: hidden;
+    }
+
+    table {
+      max-width: 114514px !important;
+    }
+
+    table th,
+    table td {
+      padding: 0 !important;
+    }
+  </style>
+</head>
+
+<body style="-webkit-app-region: drag">
+  <div id="slbingoui">
+    <div class="container">
+      <div class="row" style="-webkit-user-select: none;">
+        <div class="col-sm-11">
+        </div>
+        <div class="col-sm-1">
+          <div class="card nodrag" style="background-color: rgba(65, 174, 225, 0.5); text-align: center"
+            v-on:click="closewindow">X</div>
+        </div>
+      </div>
+      <div class="row" style=" -webkit-user-select: none;">
+        <div v-if="!pull_var" class="card nodrag fluid col-sm" style="background-color: rgba(128, 128, 128, 0.479);">
+          WAITING v0.0.1</div>
+        <div v-if="pull_var && status" class="card nodrag fluid col-sm"
+          style="background-color: rgba(0, 255, 255, 0.603);">
+          GOOD {{ now_time }}</div>
+        <div v-if="pull_var && !status" class="card nodrag fluid error col-sm"
+          style="background-color: rgba(255, 0, 0, 0.589);">BAD
+          {{ now_time }} {{ payload.error }}</div>
+      </div>
+      <div class="row" style=" -webkit-user-select: none;">
+        <div class="card nodrag fluid col-sm" v-on:click="poll_start" v-if="!pull_var"> <b>START</b> </div>
+        <div class="card nodrag fluid col-sm" v-on:click="poll_stop" v-else> <b>STOP</b> </div>
+        <div class="card nodrag fluid col-sm" v-on:click="shown.settings = !shown.settings">Option
+          ({{shown.settings ? "√" : "x"}})</div>
+        <div class="card nodrag fluid col-sm" v-on:click="shown.achv = !shown.achv">Achv ({{shown.achv ? "√" :
+          "x"}})</div>
+      </div>
+      <div class="row" style=" -webkit-user-select: none;">
+        <div class="card nodrag fluid col-sm" v-on:click="shown.coll = !shown.coll">Coll ({{shown.coll ? "√" :
+          "x"}})</div>
+        <div class="card nodrag fluid col-sm" v-on:click="shown.vague = !shown.vague">Vague ({{shown.vague ? "√" :
+          "x"}})</div>
+        <div class="card nodrag fluid col-sm" v-on:click="shown.soda = !shown.soda">Soda ({{shown.soda ? "√" :
+          "x"}})</div>
+      </div>
+      <form action="#" v-if="shown.settings" style="-webkit-app-region: no-drag;">
+        <div class="row responsive-label">
+          <div class="col-sm">
+            <label for="apiurl">API url:</label>
+          </div>
+          <div class="col-sm">
+            <input type="text" id="apiurl" v-model="apiurl" placeholder="http://127.0.0.1:11451/api" />
+          </div>
+        </div>
+        <div class="row responsive-label">
+          <div class="col-sm">
+            <label for="thin_coll">Simplified Collectibles</label>
+          </div>
+          <div class="col-sm">
+            <input type="checkbox" id="thin_coll" v-model="thin_coll" />
+          </div>
+        </div>
+      </form>
+      <template v-if="shown.achv">
+        <div class="row">
+          <div class="col-sm">
+            <table>
+              <tr>
+                <td>Achievement count: {{this.payload.achievements.length}} <small>/23</small></td>
+              </tr>
+              <template v-for="achv in this.payload.achievements.concat(['','','']).slice(0, 3)">
+                <tr>
+                  <td>
+                    Recent Achv: <span style="color:rgb(129, 70, 2)">{{ achv }}</span>
+                  </td>
+                </tr>
+              </template>
+            </table>
+          </div>
+        </div>
+      </template>
+      <div class="row" v-if="shown.coll">
+        <div class="col-sm">
+          <table v-if="thin_coll">
+            <thead>
+              <th></th>
+              <th>{{ payload.cur_chap }}</th>
+              <th>Total</th>
+            </thead>
+            <tbody>
+              <tr v-for="coll in collectibles">
+                <td>{{ coll }}</td>
+                <td>{{payload.status[payload.cur_chap][coll].cnt}}
+                  <small>/{{payload.status[payload.cur_chap][coll].tot}}</small>
+                </td>
+                <td>{{payload.status["All"][coll].cnt}} <small>/{{payload.status["All"][coll].tot}}</small></td>
+              </tr>
+            </tbody>
+          </table>
+          <table v-else>
+            <thead>
+              <th>Lvl</th>
+              <th v-for="coll in collectibles">{{short_coll[coll]}}</th>
+            </thead>
+            <tbody>
+              <template v-for="chap in extchapters">
+                <tr>
+                  <td>{{ short_name[chap] }}</td>
+                  <td v-for="coll in collectibles">{{payload.status[chap][coll].cnt}}
+                    <small>/{{payload.status[chap][coll].tot}}</small>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row" v-if="shown.vague && payload.vague">
+        <div class="col-sm">
+          <table>
+            <thead>
+              <th>Vague</th>
+              <template v-for="i in [1,2,3]">
+                <th v-if="i==payload.vague.state" style="color:rgb(129, 70, 2)">{{i}}</th>
+                <th v-else>{{i}}</th>
+              </template>
+            </thead>
+            <tbody>
+              <template v-for="type in ['limit', 'now']">
+                <tr>
+                  <td>{{type}}</td>
+                  <template v-for="i in [0,1,2]">
+                    <td v-if="i+1==payload.vague.state" style="color:rgb(129, 70, 2)">{{payload.vague[type][i].toFixed(2)}}</td>
+                    <td v-else>{{payload.vague[type][i].toFixed(2)}}</td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row" v-if="shown.soda">
+        <div class="col-sm">
+          <table>
+            <tr>
+              <td>Soda not got: {{ soda.order.filter((x)=>!payload.collectible.soda_type || !payload.collectible.soda_type[soda.id[x]]) }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var chapters = ["Induction", "Optical", "Cubism", "Blackout", "Clone", "Dollhouse", "Labyrinth", "Whitespace"];
+    var collectibles = ["fire_alarm", "extinguisher", "chess_piece", "blueprint", "constellation", "mini_challenge"];
+    var extchapters = ["All"].concat(chapters);
+    var rename = {
+      "Induction": "TestChamber",
+      "Optical": "Optical",
+      "Cubism": "Cubism",
+      "Blackout": "Horror",
+      "Clone": "Clone",
+      "Dollhouse": "Portal",
+      "Labyrinth": "Chase",
+      "Whitespace": "Astral"
+    };
+    var ch_cnt = {
+      "Induction": 9,
+      "Optical": 4,
+      "Cubism": 4,
+      "Blackout": 1,
+      "Clone": 5,
+      "Dollhouse": 4,
+      "Labyrinth": 2,
+      "Whitespace": 3
+    };
+    var short_name = {
+      "Induction": "Ind",
+      "Optical": "Opt",
+      "Cubism": "Cub",
+      "Blackout": "Bla",
+      "Clone": "Clo",
+      "Dollhouse": "Dol",
+      "Labyrinth": "Lab",
+      "Whitespace": "Whi",
+      "All": "Total"
+    }
+    var short_coll = {
+      "chess_piece": "Ches",
+      "extinguisher": "Ext",
+      "fire_alarm": "Alm",
+      "blueprint": "Blue",
+      "constellation": "Cons",
+      "mini_challenge": "Chl"
+    }
+    var soda_order = ["Red", "Green", "Diet", "Random", "Baking", "Mini", "Water"];
+    var soda_id = {
+      "Red": 5,
+      "Green": 2,
+      "Diet": 1,
+      "Random": 4,
+      "Baking": 0,
+      "Mini": 3,
+      "Water": 6
+    };
+    var info = JSON.parse('{"Induction":{"chess_piece":[0],"extinguisher":[0],"fire_alarm":[39],"blueprint":[0],"constellation":[]},"Optical":{"chess_piece":[{"id":4,"color":"red","type":"rook"},{"id":8,"color":"blue","type":"knight"}],"extinguisher":[13,12,6,7,2,1,3,9,11,4,8,10,5,14],"fire_alarm":[9,22,12,24,16,15,14,26,20,19,10,23,18,25,17,21,13],"blueprint":[10,14],"constellation":[{"id":3,"object":"table"}]},"Cubism":{"chess_piece":[{"id":11,"color":"red","type":"queen"},{"id":5,"color":"red","type":"king"}],"extinguisher":[22,19,24,25,23,21,17,16,18,26,20],"fire_alarm":[5,1,2,6,3,7,0,8,4],"blueprint":[9,8],"constellation":[{"id":1,"object":"Cup"}]},"Blackout":{"chess_piece":[{"id":9,"color":"blue","type":"pawn"},{"id":14,"color":"blue","type":"pawn"}],"extinguisher":[41,29,30,31,32,28,34,35,33,42,40,39,38],"fire_alarm":[41,40],"blueprint":[11],"constellation":[{"id":4,"object":"Cheese"}]},"Clone":{"chess_piece":[{"id":12,"color":"blue","type":"pawn"},{"id":7,"color":"red","type":"knight"}],"extinguisher":[53,50,54,56,45,46,55,47,52,58,43,44,49,48,57,51],"fire_alarm":[38,28,27,32,36,37,31,29,35,34,33,30],"blueprint":[],"constellation":[{"id":2,"object":"Soda machine"}]},"Dollhouse":{"chess_piece":[{"id":13,"color":"blue","type":"pawn"}],"extinguisher":[60,67,64,66,59,62,61,65,63],"fire_alarm":[48,43,44,42,46,47,45],"blueprint":[12,2,1],"constellation":[{"id":0,"object":"Chair"}]},"Labyrinth":{"chess_piece":[{"id":3,"color":"red","type":"pawn"},{"id":2,"color":"blue","type":"king"}],"extinguisher":[90,81,84,91,87,74,88,86,78,93,71,72,73,70,82,89,76,80,77],"fire_alarm":[61,63,60,59,57,62,65,64,56,51,52,53,66,55,54,50],"blueprint":[6,13,7],"constellation":[{"id":6,"object":"Projector"}]},"Whitespace":{"chess_piece":[{"id":1,"color":"blue","type":"pawn"},{"id":10,"color":"blue","type":"rook"},{"id":6,"color":"red","type":"pawn"}],"extinguisher":[69,68],"fire_alarm":[49],"blueprint":[3,5,4],"constellation":[{"id":5,"object":"Piano"}]}}');
+    function calc(t, r) {
+      if (r.achievements) {
+        let new_ac = r.achievements.filter((y) => t.achievements.findIndex((x) => x == y) == -1);
+        let old_ac = t.achievements.filter((y) => r.achievements.findIndex((x) => x == y) != -1);
+        r.achievements = new_ac.concat(old_ac);
+      } else {
+        r.achievements = t.achievements;
+      }
+      r.status = t.status;
+      if (r.collectible) {
+        for (chap of chapters) {
+          for (coll of collectibles) {
+            if (coll == "mini_challenge") {
+              continue;
+            } else {
+              let z = info[chap][coll].map((x) => isNaN(x) ? x.id : x);
+              r.status[chap][coll] = {
+                "cnt": z.map((x) => Number(r.collectible[coll][x])).reduce((x, y) => x + y, 0), "tot": z.length
+              }
+            }
+          }
+        }
+      }
+      if (r.challenge_mode) {
+        for (chap of chapters) {
+          let z = r.challenge_mode[rename[chap]];
+          r.status[chap]["mini_challenge"] = {
+            "cnt": z ? z.length : 0, "tot": ch_cnt[chap]
+          }
+        }
+      }
+      for (coll of collectibles) {
+        r.status["All"][coll] =
+          chapters
+            .map((chap) => r.status[chap][coll])
+            .reduce((x, y) => ({
+              "cnt": x.cnt + y.cnt, "tot": x.tot + y.tot
+            }), {
+              "cnt": 0, "tot": 0
+            })
+      }
+      r.cur_chap = t.cur_chap;
+      if (r.level && r.level.current) {
+        for (chap of chapters) {
+          if (rename[chap] == r.level.current) {
+            r.cur_chap = chap;
+            break;
+          }
+        }
+      }
+      if (!r.vague) {
+        r.vague = t.vague;
+        r.vague.state = 0;
+      }
+
+      return r;
+    }
+    function initStatus() {
+      st = {};
+      for (chap of chapters) {
+        st[chap] = {};
+        for (coll of collectibles) {
+          if (coll == "mini_challenge") {
+            st[chap][coll] = {
+              "cnt": 0, "tot": ch_cnt[chap]
+            }
+          } else {
+            let z = info[chap][coll].map((x) => isNaN(x) ? x.id : x);
+            st[chap][coll] = {
+              "cnt": 0, "tot": z.length
+            }
+          }
+        }
+      }
+      st["All"] = {};
+      for (coll of collectibles) {
+        st["All"][coll] =
+          chapters
+            .map((chap) => st[chap][coll])
+            .reduce((x, y) => ({
+              "cnt": x.cnt + y.cnt, "tot": x.tot + y.tot
+            }), {
+              "cnt": 0, "tot": 0
+            })
+      }
+      return st;
+    }
+    var app = new Vue({
+      el: '#slbingoui',
+      data: {
+        ch_cnt: ch_cnt,
+        chapters: chapters,
+        extchapters: extchapters,
+        rename: rename,
+        short_name: short_name,
+        collectibles: collectibles,
+        short_coll: short_coll,
+        pull_var: null,
+        soda: {
+          order: soda_order,
+          id: soda_id
+        },
+        apiurl: "http://127.0.0.1:11451/api",
+        status: true,
+        shown: {
+          settings: true,
+          achv: true,
+          coll: true,
+          vague: true,
+          soda: true
+        },
+        now_time: "",
+        thin_coll: false,
+        payload: {
+          "achievements": [], "status": initStatus(), "collectible": {}, cur_chap: "Induction", "vague": {
+            "limit": [
+              120.0,
+              15.0,
+              30.0
+            ],
+            "now": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "state": 0
+          }
+        }
+      },
+      methods: {
+        updateAPI() {
+          fetch(this.apiurl)
+            .then(response => response.json())
+            .then(data => {
+              let d = new Date()
+              this.now_time = d.toISOString();
+              this.status = data.error ? false : true;
+              this.payload = calc(this.payload, data)
+            })
+            .catch((e) => status = false);
+        },
+        poll_start() {
+          this.now_time = " api not running"
+          this.status = false
+          this.pull_var = setInterval(this.updateAPI, 50)
+        },
+        poll_stop() {
+          clearInterval(this.pull_var)
+          this.pull_var = null
+        },
+        closewindow() {
+          window.close()
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "slbingoui",
+  "version": "1.0.0",
+  "description": "Superliminal Bingo UI",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "npx electron-packager . --icon=ico.ico --overwrite --out=..",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "EtaoinWu",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^15.3.0",
+    "electron-packager": "^15.4.0"
+  }
+}
