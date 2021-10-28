@@ -10,4 +10,4 @@ This is a piece of crap, bodged together in like six hours. I have no prior Vue 
 
 ## Usage
 
-The [pdf](How to use the ugliest tracker overlay.pdf) file contains usage.
+The [manual](help.pdf) file contains usage.
