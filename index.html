@@ -23,6 +23,10 @@
     table td {
       padding: 0 !important;
     }
+
+    .unhighlight {
+      color: rgb(85, 85, 85);
+    }
   </style>
 </head>
 
@@ -110,7 +114,9 @@
             <tbody>
               <tr v-for="coll in collectibles">
                 <td>{{ coll }}</td>
-                <td>{{payload.status[payload.cur_chap][coll].cnt}}
+                <td
+                  v-bind:class="{ unhighlight : payload.status[payload.cur_chap][coll].cnt == payload.status[payload.cur_chap][coll].tot}">
+                  {{payload.status[payload.cur_chap][coll].cnt}}
                   <small>/{{payload.status[payload.cur_chap][coll].tot}}</small>
                 </td>
                 <td>{{payload.status["All"][coll].cnt}} <small>/{{payload.status["All"][coll].tot}}</small></td>
@@ -126,7 +132,9 @@
               <template v-for="chap in extchapters">
                 <tr>
                   <td>{{ short_name[chap] }}</td>
-                  <td v-for="coll in collectibles">{{payload.status[chap][coll].cnt}}
+                  <td v-for="coll in collectibles"
+                    v-bind:class="{ unhighlight : payload.status[chap][coll].cnt == payload.status[chap][coll].tot}">
+                    {{payload.status[chap][coll].cnt}}
                     <small>/{{payload.status[chap][coll].tot}}</small>
                   </td>
                 </tr>
@@ -151,7 +159,8 @@
                 <tr>
                   <td>{{type}}</td>
                   <template v-for="i in [0,1,2]">
-                    <td v-if="i+1==payload.vague.state" style="color:rgb(129, 70, 2)">{{payload.vague[type][i].toFixed(2)}}</td>
+                    <td v-if="i+1==payload.vague.state" style="color:rgb(129, 70, 2)">
+                      {{payload.vague[type][i].toFixed(2)}}</td>
                     <td v-else>{{payload.vague[type][i].toFixed(2)}}</td>
                   </template>
                 </tr>
@@ -164,7 +173,8 @@
         <div class="col-sm">
           <table>
             <tr>
-              <td>Soda not got: {{ soda.order.filter((x)=>!payload.collectible.soda_type || !payload.collectible.soda_type[soda.id[x]]) }}</td>
+              <td>Soda not got: {{ soda.order.filter((x)=>!payload.collectible.soda_type ||
+                !payload.collectible.soda_type[soda.id[x]]) }}</td>
             </tr>
           </table>
         </div>
