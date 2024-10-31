@@ -2,7 +2,7 @@ const { app, BrowserWindow } = require('electron')
 function createWindow () {
   const win = new BrowserWindow({
     width: 350,
-    height: 680,
+    height: 700,
     titleBarStyle: 'hidden',
     transparent: true,
     resizable: true

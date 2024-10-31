@@ -78,7 +78,7 @@
         </div>
         <div class="row responsive-label" v-if="shown.coll">
           <div class="col-sm">
-            <label for="thin_coll">Simple collectibles</label>
+            <label for="thin_coll">Simple matrix</label>
           </div>
           <div class="col-sm">
             <input type="checkbox" id="thin_coll" v-model="thin_coll" />
@@ -312,7 +312,7 @@
             }
           }
         }
-        // r.chess_tracker = calcChessTracker(r.collectible.chess_piece);
+        r.chess_tracker = calcChessTracker(r.collectible.chess_piece);
       }
       if (r.challenge_mode) {
         for (chap of chapters) {
